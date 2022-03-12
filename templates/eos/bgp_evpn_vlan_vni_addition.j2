@@ -1,0 +1,8 @@
+{% for vlan in vlans -%}
+router bgp {{ bgp.as_number }}
+   vlan {{ vlan }}
+      rd {{ vlans[vlan].rd }}
+      route-target export {{ vlans[vlan].export_rt }}
+      route-target import {{ vlans[vlan].import_rt }}
+      redistribute learned
+{% endfor -%}

@@ -1,0 +1,4 @@
+{% for vlan in vlans -%}
+vlan {{ vlan }}
+  vn-segment {{ vlans[vlan].vni }}
+{% endfor -%}

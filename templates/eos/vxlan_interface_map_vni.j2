@@ -1,0 +1,7 @@
+interface Vxlan1
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
+   {% for vlan in vlans -%}
+   vxlan vlan {{ vlan }} vni {{ vlans[vlan].vni }}
+   {% endfor -%}
+ 

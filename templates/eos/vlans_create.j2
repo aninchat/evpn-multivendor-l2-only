@@ -1,0 +1,4 @@
+{% for vlan in vlans -%}
+vlan {{ vlan }}
+   name {{ vlans[vlan].name }}
+{% endfor -%}

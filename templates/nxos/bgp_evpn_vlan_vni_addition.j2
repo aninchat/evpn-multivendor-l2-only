@@ -1,0 +1,7 @@
+evpn
+  {% for vlan in vlans -%}
+  vni {{ vlans[vlan].vni }} l2
+    rd {{ vlans[vlan].rd }}
+    route-target import {{ vlans[vlan].import_rt }}
+    route-target export {{ vlans[vlan].export_rt }}
+  {% endfor -%}

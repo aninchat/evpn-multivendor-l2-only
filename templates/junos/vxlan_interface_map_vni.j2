@@ -1,0 +1,4 @@
+{% for vlan in vlans -%}
+set switch-options vrf-target import target:{{ vlans[vlan].import_rt }}
+set switch-options vrf-target export target:{{ vlans[vlan].export_rt }}
+{% endfor -%}

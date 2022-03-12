@@ -1,0 +1,29 @@
+---
+
+interfaces:
+        loopback0:
+                address: '192.168.100.2/32'
+        swp1:
+                address: '10.10.10.3/31'
+        swp2:
+                address: '10.10.10.11/31'
+bgp:
+        as_number: 64522
+        router_id: '192.168.100.2'
+        neighbors:
+                10.10.10.2:
+                        remote_as: 65500
+                        loopback: '192.168.101.1'
+                10.10.10.10:
+                        remote_as: 65500
+                        loopback: '192.168.101.2'
+vlans:
+        100:
+                vni: 10100
+                name: 'VLAN100'
+                vni_source: '192.168.100.2'
+                interfaces:
+                        - swp3
+                rd: '192.168.100.2:2'
+                export_rt: '100:100'
+                import_rt: '100:100'

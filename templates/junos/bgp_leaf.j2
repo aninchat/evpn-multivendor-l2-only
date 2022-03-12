@@ -1,0 +1,15 @@
+set routing-options autonomous-system {{ bgp.as_number }}
+set routing-options router-id {{ bgp.router_id }}
+set routing-options forwarding-table export ECMP
+{% for neighbor in bgp.neighbors -%}
+set protocols bgp group underlay neighbor {{ neighbor }} family inet unicast
+set protocols bgp group underlay neighbor {{ neighbor }} peer-as {{ bgp.neighbors[neighbor].remote_as }}
+set protocols bgp group overlay neighbor {{ bgp.neighbors[neighbor].loopback }} family evpn signaling
+set protocols bgp group overlay neighbor {{ bgp.neighbors[neighbor].loopback }} peer-as {{ bgp.neighbors[neighbor].remote_as }}
+{% endfor -%}
+set protocols bgp group underlay export allow-loopback0
+set protocols bgp group underlay multipath
+set protocols bgp group overlay multihop ttl 3
+set protocols bgp group overlay local-address {{ bgp.router_id }}
+set protocols bgp group overlay multipath
+commit

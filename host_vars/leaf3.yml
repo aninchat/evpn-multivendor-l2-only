@@ -1,0 +1,29 @@
+---
+
+interfaces:
+        loopback0:
+                address: '192.168.100.3/32'
+        Ethernet1/1:
+                address: '10.10.10.5/31'
+        Ethernet1/2:
+                address: '10.10.10.13/31'
+bgp:
+        as_number: 64523
+        router_id: '192.168.100.3'
+        neighbors:
+                10.10.10.4:
+                        remote_as: 65500
+                        loopback: '192.168.101.1'
+                10.10.10.12:
+                        remote_as: 65500
+                        loopback: '192.168.101.2'
+vlans:
+        100:
+                vni: 10100
+                name: 'VLAN100'
+                vni_source: '192.168.100.2'
+                interfaces:
+                        - 'Ethernet1/3'
+                rd: '192.168.100.3:3'
+                export_rt: '100:100'
+                import_rt: '100:100'

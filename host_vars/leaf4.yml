@@ -1,0 +1,31 @@
+---
+
+interfaces:
+        lo0:
+                address: '192.168.100.4/32'
+        xe-0/0/0:
+                address: '10.10.10.7/31'
+        xe-0/0/1:
+                address: '10.10.10.15/31'
+bgp:
+        as_number: 64524
+        router_id: '192.168.100.4'
+        neighbors:
+                10.10.10.6:
+                        remote_as: 65500
+                        loopback: '192.168.101.1'
+                10.10.10.14:
+                        remote_as: 65500
+                        loopback: '192.168.101.2'
+rd: '192.168.100.4:4'
+vni_source: 'lo0.0'
+vlans:
+        100:
+                vni: 10100
+                name: 'VLAN100'
+                rt: '100:100'
+                import_rt: '100:100'
+                export_rt: '100:100'
+                interfaces:
+                        - 'xe-0/0/2' 
+        

@@ -1,0 +1,8 @@
+interface nve1
+  no shutdown
+  host-reachability protocol bgp
+  source-interface loopback0
+  {% for vlan in vlans -%}
+  member vni {{ vlans[vlan].vni}}
+    ingress-replication protocol bgp
+  {% endfor -%}

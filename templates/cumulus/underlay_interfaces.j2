@@ -1,0 +1,8 @@
+{% for interface in interfaces -%}
+{% if interface == 'loopback0' -%} 
+add loopback lo ip address {{ interfaces[interface].address }}
+{% else -%} 
+add interface {{ interface }} ip address {{ interfaces[interface].address }}
+{% endif -%}
+{% endfor -%}
+

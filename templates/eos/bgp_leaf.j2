@@ -1,0 +1,25 @@
+ip routing ipv6 interfaces 
+ipv6 unicast-routing
+service routing protocols model multi-agent
+router bgp {{ bgp.as_number }}
+   router-id {{ bgp.router_id }}
+   no bgp default ipv4-unicast
+   maximum-paths 2
+   no bgp bestpath as-path multipath-relax
+   neighbor underlay peer group
+   neighbor underlay remote-as 65500
+   neighbor underlay send-community
+   neighbor overlay peer group
+   neighbor overlay remote-as 65500
+   neighbor overlay send-community
+   neighbor overlay update-source lo0
+   neighbor overlay ebgp-multihop 3
+   {% for neighbor in bgp.neighbors -%}
+   neighbor {{ neighbor }} peer group underlay
+   neighbor {{ bgp.neighbors[neighbor].loopback }} peer group overlay
+   {% endfor -%}
+   redistribute connected route-map allow-loopback0
+   address-family ipv4
+      neighbor underlay activate
+   address-family evpn
+      neighbor overlay activate

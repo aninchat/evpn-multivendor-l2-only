@@ -1,0 +1,119 @@
+---
+
+- name: 3-stage EVPN multi-vendor deployment 
+  hosts: all
+  tasks:
+          - name: configure route-map on devices
+            block:
+                    - name: configure route-map on cumulus devices
+                      when: platform == 'cumulus'
+                      community.network.nclu:
+                              commands:
+                                      - add routing route-map allow-loopback0 permit 10 match interface lo
+                              commit: yes
+                    - name: configure route-map on non-cumulus devices
+                      when: platform != 'cumulus'
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/route_map.j2') }}"
+          - name: configure interfaces on network devices
+            block:
+                    - name: configure interfaces on non-cumulus switches
+                      when: platform != 'cumulus'
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/underlay_interfaces.j2') }}"
+                    - name: configure interfaces on cumulus devices
+                      when: platform == 'cumulus'
+                      community.network.nclu:
+                              template: |
+                                      {% for interface in interfaces -%}
+                                      {% if interface == 'loopback0' -%}
+                                      add loopback lo ip address {{ interfaces[interface].address }}
+                                      {% else -%}
+                                      add interface {{ interface }} ip address {{ interfaces[interface].address }}
+                                      {% endif -%}
+                                      {% endfor -%}
+                              commit: yes
+          - name: configure BGP on devices
+            block:
+                    - name: configure BGP on non-cumulus devices
+                      when: platform != 'cumulus'
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/bgp_{{ role }}.j2') }}"
+                    - name: configure BGP on cumulus switches
+                      when: platform == 'cumulus'
+                      community.network.nclu:
+                              template: |
+                                      add bgp autonomous-system {{ bgp.as_number }}
+                                      {% for neighbor in bgp.neighbors -%}
+                                      add bgp neighbor {{ neighbor }} remote-as {{ bgp.neighbors[neighbor].remote_as }}
+                                      add bgp neighbor {{ neighbor }} send-community both
+                                      add bgp ipv4 unicast neighbor {{ neighbor }} activate
+                                      add bgp neighbor {{ bgp.neighbors[neighbor].loopback }} remote-as {{ bgp.neighbors[neighbor].remote_as }}
+                                      add bgp neighbor {{ bgp.neighbors[neighbor].loopback }} update-source lo
+                                      add bgp neighbor {{ bgp.neighbors[neighbor].loopback }} ebgp-multihop 3
+                                      add bgp l2vpn evpn neighbor {{ bgp.neighbors[neighbor].loopback }} activate
+                                      {% endfor %}
+                                      add bgp ipv4 unicast redistribute connected route-map allow-loopback0
+                                      add bgp l2vpn evpn advertise-all-vni
+                              commit: yes
+          - name: Configure VLANs on leafs
+            block:
+                    - name: Configure VLANs on non-cumulus devices
+                      when: (platform != 'cumulus') and (inventory_hostname in groups['leafs'])
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/vlans_create.j2') }}"
+                    - name: Configure VLANs on cumulus devices
+                      when: (platform == 'cumulus') and (inventory_hostname in groups['leafs'])
+                      community.network.nclu:
+                              template: |
+                                      {% for vlan in vlans -%}
+                                      add vlan {{ vlan }} alias {{ vlans[vlan].name }}
+                                      {% endfor %}
+                              commit: yes
+          - name: Map interfaces to VLANs
+            block:
+                    - name: Mapping interfaces to VLANs on non cumulus devices
+                      when: (platform != 'cumulus') and (inventory_hostname in groups['leafs'])
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/access_interfaces_to_vlan_mapping.j2') }}"
+                    - name: Mapping interfaces to VLANs on cumulus devices
+                      when: (platform == 'cumulus') and (inventory_hostname in groups['leafs'])
+                      community.network.nclu:
+                              template: |
+                                      {% for vlan in vlans -%}
+                                      {% for interface in vlans[vlan].interfaces -%}
+                                      add interface {{ interface }} bridge access {{ vlan }}
+                                      {% endfor -%}
+                                      {% endfor -%}
+                              commit: yes
+          - name: Adding VLANs/VNIs to BGP
+            block:
+                    - name: adding VLANs/VNIs to BGP on non cumulus devices
+                      when: (platform != 'cumulus') and (inventory_hostname in groups['leafs'])
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/bgp_evpn_vlan_vni_addition.j2') }}"
+                    - name: adding VLANs/VNIs to BGP on cumulus devices
+                      when: (platform == 'cumulus') and (inventory_hostname in groups['leafs'])
+                      community.network.nclu:
+                              template: |
+                                      {% for vlan in vlans -%}
+                                      add bgp l2vpn evpn vni {{ vlans[vlan].vni }} route-target import {{ vlans[vlan].import_rt }}
+                                      add bgp l2vpn evpn vni {{ vlans[vlan].vni }} route-target export {{ vlans[vlan].export_rt }}
+                                      {% endfor -%}
+                              commit: yes
+          - name: Add VLANs to VNIs mapping to VXLAN interface
+            block:
+                    - name: Add VLAN to VNI mapping to VXLAN interface on non cumulus devices
+                      when: (platform != 'cumulus') and (inventory_hostname in groups['leafs'])
+                      cli_config:
+                              config: "{{ lookup('template', 'templates/{{ platform }}/vxlan_interface_map_vni.j2') }}"
+                    - name: Add VLAN to VNI mapping to VXLAN interface on cumulus devices
+                      when: (platform == 'cumulus') and (inventory_hostname in groups['leafs'])
+                      community.network.nclu:
+                              template: |
+                                      {% for vlan in vlans -%}
+                                      add vxlan vni{{ vlans[vlan].vni }} vxlan id {{  vlans[vlan].vni }}
+                                      add vxlan vni{{ vlans[vlan].vni }} bridge access {{ vlan }}
+                                      add vxlan vni{{ vlans[vlan].vni }} vxlan local-tunnelip {{ vlans[vlan].vni_source }}
+                                      {% endfor -%}
+                              commit: yes

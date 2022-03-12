@@ -1,0 +1,5 @@
+---
+
+ansible_user: root
+ansible_password: root
+platform: 'cumulus'

@@ -1,0 +1,64 @@
+name: evpn-l2-multivendor
+topology:
+  nodes:
+    spine1:
+            kind: vr-veos
+            image: vrnetlab/vr-veos:4.27.2F
+            mgmt_ipv4: 172.20.20.101
+    spine2:
+            kind: vr-veos
+            image: vrnetlab/vr-veos:4.27.2F
+            mgmt_ipv4: 172.20.20.102
+    leaf1:
+            kind: vr-veos
+            image: vrnetlab/vr-veos:4.27.2F
+            mgmt_ipv4: 172.20.20.11
+    leaf2:
+            kind: cvx
+            image: networkop/cx:4.4.0
+            mgmt_ipv4: 172.20.20.12
+    leaf3:
+            kind: vr-n9kv
+            image: vrnetlab/vr-n9kv:9.3.9
+            mgmt_ipv4: 172.20.20.13
+    leaf4:
+            kind: vr-vqfx
+            image: vrnetlab/vr-vqfx:20.2R1.10
+            mgmt_ipv4: 172.20.20.14
+    h1:
+            kind: linux
+            image: networkop/host:ifreload
+            binds:
+                    - hosts/h1_interfaces:/etc/network/interfaces
+            mgmt_ipv4: 172.20.20.21
+    h2:
+            kind: linux
+            image: networkop/host:ifreload
+            binds:
+                    - hosts/h2_interfaces:/etc/network/interfaces
+            mgmt_ipv4: 172.20.20.22
+    h3:
+            kind: linux
+            image: networkop/host:ifreload
+            binds:
+                    - hosts/h3_interfaces:/etc/network/interfaces
+            mgmt_ipv4: 172.20.20.23
+    h4:
+            kind: linux
+            image: networkop/host:ifreload
+            binds:
+                    - hosts/h4_interfaces:/etc/network/interfaces
+            mgmt_ipv4: 172.20.20.24
+  links:
+          - endpoints: ["leaf1:eth1", "spine1:eth1"]
+          - endpoints: ["leaf1:eth2", "spine2:eth1"]
+          - endpoints: ["leaf2:swp1", "spine1:eth2"]
+          - endpoints: ["leaf2:swp2", "spine2:eth2"]
+          - endpoints: ["leaf3:eth1", "spine1:eth3"]
+          - endpoints: ["leaf3:eth2", "spine2:eth3"]
+          - endpoints: ["leaf4:eth1", "spine1:eth4"]
+          - endpoints: ["leaf4:eth2", "spine2:eth4"]
+          - endpoints: ["leaf1:eth3", "h1:eth1"]
+          - endpoints: ["leaf2:swp3", "h2:eth1"]
+          - endpoints: ["leaf3:eth3", "h3:eth1"]
+          - endpoints: ["leaf4:eth3", "h4:eth1"]

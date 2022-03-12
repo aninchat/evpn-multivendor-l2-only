@@ -1,0 +1,6 @@
+{% for interface in interfaces -%}
+set interface {{ interface }} unit 0 family inet address {{ interfaces[interface].address }}
+{% if interface != 'lo0' -%}
+set protocol lldp interface {{ interface }}
+{% endif -%}
+{% endfor -%}
